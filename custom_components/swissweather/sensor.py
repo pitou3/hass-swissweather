@@ -120,7 +120,7 @@ async def async_setup_entry(
     else:
         id_combo = f"{postCode}-{stationCode}"
     deviceInfo = DeviceInfo(entry_type=DeviceEntryType.SERVICE, name=f"MeteoSwiss at {id_combo}", identifiers={(DOMAIN, f"swissweather-{id_combo}")})
-    entities: list[SwissWeatherSensor|SwissPollenSensor] = [SwissWeatherSensor(postCode, deviceInfo, sensorEntry, coordinator) for sensorEntry in SENSORS]
+    entities: list[SwissWeatherSensor|SwissPollenSensor|SwissWeatherHeatWaveLevelSensor] = [SwissWeatherSensor(postCode, deviceInfo, sensorEntry, coordinator) for sensorEntry in SENSORS]
 
     if pollenStationCode is not None:
         pollenCoordinator = hass.data[DOMAIN][get_pollen_coordinator_key(config_entry)]
@@ -128,6 +128,7 @@ async def async_setup_entry(
         entities += [SwissPollenLevelSensor(postCode, pollenStationCode, deviceInfo, sensorEntry, pollenCoordinator) for sensorEntry in POLLEN_SENSORS if sensorEntry.device_class is None]
 
     entities.append(SwissWeatherWarningsSensor(postCode, deviceInfo, coordinator))
+    entities.append(SwissWeatherHeatWaveLevelSensor(postCode, deviceInfo, coordinator))
     for i in range(0, numberOfWeatherWarnings):
         entities.append(SwissWeatherSingleWarningSensor(postCode, i, deviceInfo, coordinator))
         entities.append(SwissWeatherSingleWarningLevelSensor(postCode, i, deviceInfo, coordinator))
@@ -164,6 +165,13 @@ def get_warnings_from_coordinator(coordinator_data) -> list[Warning] | None:
     if coordinator_data is None or len(coordinator_data) < 2:
         return None
     return coordinator_data[1].warnings
+
+def get_warning_of_type(coordinator_data, warning_type: WarningType) -> Warning | None:
+    """Returns the first warning of the given type, or None if there isn't one active."""
+    warnings = get_warnings_from_coordinator(coordinator_data)
+    if warnings is None:
+        return None
+    return next((warning for warning in warnings if warning.warningType == warning_type), None)
 
 def get_color_for_warning_level(level: WarningLevel) -> str:
     """Returns icon color for the corresponding warning level."""
@@ -353,6 +361,55 @@ class SwissWeatherSingleWarningLevelSensor(CoordinatorEntity[SwissWeatherDataCoo
     @cached_property
     def icon(self):
         return "mdi:alert"
+
+class SwissWeatherHeatWaveLevelSensor(CoordinatorEntity[SwissWeatherDataCoordinator], SensorEntity):
+    """Shows the current heat wave warning level, or 'No danger' if none is active."""
+
+    def __init__(self, post_code:str, device_info: DeviceInfo, coordinator:SwissWeatherDataCoordinator) -> None:
+        super().__init__(coordinator)
+        self.entity_description = SensorEntityDescription(key="heat_wave_level",
+                                                          name="Heat wave level",
+                                                          device_class=SensorDeviceClass.ENUM)
+        self._attr_name = f"Heat wave level at {post_code}"
+        self._attr_unique_id = f"{post_code}.heat_wave_level"
+        self._attr_device_info = device_info
+        self._attr_attribution = "Source: MeteoSwiss"
+        self._attr_options = [get_warning_enum_to_name(warningLevel) for warningLevel in WarningLevel]
+        self._entity_component_unrecorded_attributes = MATCH_ALL
+
+    def _get_warning(self) -> Warning | None:
+        return get_warning_of_type(self.coordinator.data, WarningType.HEAT_WAVES)
+
+    @property
+    def native_value(self) -> StateType | Decimal:
+        warning = self._get_warning()
+        if warning is None:
+            return get_warning_enum_to_name(WarningLevel.NO_DANGER)
+        return get_warning_enum_to_name(warning.warningLevel)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, any] | None:
+        """Return additional state attributes."""
+        warning = self._get_warning()
+        if warning is None:
+            return {
+                'numeric': WarningLevel.NO_DANGER,
+                'icon_color': get_color_for_warning_level(WarningLevel.NO_DANGER)
+            }
+        return {
+            'numeric': warning.warningLevel,
+            'text': warning.text,
+            'html_text': warning.htmlText,
+            'valid_from': warning.validFrom,
+            'valid_to': warning.validTo,
+            'links': warning.links,
+            'outlook': warning.outlook,
+            'icon_color': get_color_for_warning_level(warning.warningLevel)
+        }
+
+    @cached_property
+    def icon(self):
+        return "mdi:thermometer-alert"
 
 class SwissPollenSensor(CoordinatorEntity[SwissPollenDataCoordinator], SensorEntity):
 

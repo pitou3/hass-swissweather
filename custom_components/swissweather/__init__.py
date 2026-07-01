@@ -12,7 +12,7 @@ from .coordinator import SwissPollenDataCoordinator, SwissWeatherDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.WEATHER]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.WEATHER, Platform.BINARY_SENSOR]
 
 def get_weather_coordinator_key(entry: ConfigEntry):
     return entry.entry_id + "-weather-coordinator"
