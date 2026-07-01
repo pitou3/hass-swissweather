@@ -10,13 +10,13 @@ It currently supports:
 
 ## Installation
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=izacus&repository=hass-swissweather&category=integration)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=pitou3&repository=hass-swissweather&category=integration)
 
 ### With HACS
 
 1. Go to HACS page in Home Assistant
 2. Click "three dots" in upper right corner and select "Custom Repositories..."
-3. Enter `https://github.com/izacus/hass-swissweather` into "Repository" field
+3. Enter `https://github.com/pitou3/hass-swissweather` into "Repository" field
 4. Select "Integration"
 5. Click "Add"
 6. On "Integrations" tab click "Explore And Download Repositories"

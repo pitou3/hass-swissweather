@@ -2,14 +2,15 @@
   "domain": "swissweather",
   "name": "Swiss Weather",
   "codeowners": [
-    "@izacus"
+    "@izacus",
+    "@pitou3"
   ],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/izacus/hass-swissweather",
+  "documentation": "https://github.com/pitou3/hass-swissweather",
   "integration_type": "service",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/izacus/hass-swissweather/issues",
+  "issue_tracker": "https://github.com/pitou3/hass-swissweather/issues",
   "requirements": ["requests"],
   "version": "1.2.5"
 }
